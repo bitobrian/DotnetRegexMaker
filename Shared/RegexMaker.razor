@@ -1,0 +1,211 @@
+﻿@using Bitobrian.RegexMaker.Web.Data
+@using System.Reflection
+@using System.Runtime.Versioning
+@inject IJSRuntime _js
+
+@* <div class="window" style="width: 320px"> *@
+<div class="window" style="width: 525px;">
+  <div class="title-bar">
+    <div class="title-bar-text">.NET Regex Maker 2.0</div>
+    <div class="title-bar-controls">
+    <button aria-label="Help"></button>
+    <button aria-label="Close"></button>
+  </div>
+  </div>
+  <div class="window-body">
+    <div class="field-row">
+      @if (!string.IsNullOrEmpty(_vm.RegexString))
+      {
+        <label for="regexString">Your Regex String</label>
+        <label id="regexString">@_vm.RegexString</label>
+        <button @onclick="CopyTextToClipboard">Copy</button>
+      }
+    </div>
+    <br/>
+    <fieldset>
+      <legend>Builder Box</legend>
+      <div class="field-row">
+        <label for="build">Build</label>
+        <select id="build" value="@_vm.BuildSelected" @onchange="OnBuildChanged">
+          @foreach (var build in _vm.BuildSelection)
+          {
+            <option value=@build>@build</option>
+          }
+        </select>
+        <label for="charactertype">Character</label>
+        <select id="charactertype" value="@_vm.CharacterSelected" @onchange="OnCharacterTypeChanged">
+          @foreach (var character in _vm.CharacterTypeSelection)
+          {
+            <option value=@character>@character</option>
+          }
+        </select>
+        <label for="occurrencelabel">Occurrence</label>
+        <select id="occurrencelabel" value="@_vm.OccurrenceSelected" @onchange="OnOccurrenceChanged">
+          @foreach (var occurrence in _vm.OccurrenceSelection)
+          {
+            <option value=@occurrence>@occurrence</option>
+          }
+        </select>
+      </div>
+      <div class="field-row">
+        @if (_vm.ShowCharacterInput)
+        {
+          <label for="SpecificCharacter">Character</label>
+          <input id="SpecificCharacter" @bind="_vm.SpecificCharacter"/>
+        }
+        @if (_vm.ShowOccurrenceInput)
+        {
+          <label for="SpecificOccurrence">Occurrence</label>
+          <input id="SpecificOccurrence" @bind="_vm.SpecificOccurrence.First"/>
+          <p>&</p>
+          <input id="SpecificOccurrenceLast" @bind="_vm.SpecificOccurrence.Last"/>
+        }
+      </div>
+      <div class="field-row" style="float: right;">
+        <button @onclick="AddSnippit">Append Snippit</button>
+        <button @onclick="Complete">Append End</button>
+      </div>
+    </fieldset>
+    <br/>
+    <fieldset>
+      <legend>Test Box</legend>
+      <div class="field-row">
+        <label for="TestInput">Validate by entering some text:</label>
+        <input id="TestInput" @bind="TestInput"/>
+        @if (ShowTestResult)
+        {
+          <p style="color: @TestPassColor;"> @TestPassLabel</p>
+        }
+      </div>
+        <br/>
+      <div class="field-row" style="float: right;">
+        <button @onclick="TestInputText">Test</button>
+        <button @onclick="ClearInputText">Clear</button>
+      </div>
+    </fieldset>
+    <br/>
+    <div class="field-row" style="float: right;">
+      <button @onclick="ClearRegexString">Clear</button>
+    </div>
+    <br/>
+    <br/>
+  </div>
+  <div class="status-bar">
+    <p class="status-bar-field">Powered by <a href="https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor">Blazor</a> and 
+      <a href="https://jdan.github.io/98.css/">98.css</a></p>
+    <p class="status-bar-field">@_vm.LogMessage</p>
+    <p class="status-bar-field">.NET Regex Library: <strong>@dotnetVersion</strong> </p>
+  </div>
+</div>
+
+@code {
+  RegexMakerVM _vm = new();
+
+  string TestInput = "";
+  string TestPassLabel = "";
+  string TestPassColor = "red";
+  bool ShowTestResult = false;
+
+  string dotnetVersion = Assembly.GetEntryAssembly()?.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
+
+  void ClearRegexString()
+  {
+    _vm.RegexString = string.Empty;
+  }
+
+  void AddSnippit()
+  {
+    var values = new string[]
+    {
+      _vm.BuildSelected,
+      _vm.CharacterSelected,
+      _vm.SpecificCharacter,
+      _vm.OccurrenceSelected,
+      _vm.SpecificOccurrence.First,
+      _vm.SpecificOccurrence.Last
+    };
+
+    _vm.RegexString = RegexBuilder.ToRegex(values, _vm.RegexString);
+    
+    Clear();
+  }
+  
+  void OnBuildChanged(ChangeEventArgs e)
+  {
+    var selection = e.Value.ToString();
+    
+    _vm.BuildSelected = selection;
+  }
+
+  void OnCharacterTypeChanged(ChangeEventArgs e)
+  {
+    var selection = e.Value.ToString();
+    
+    if(selection.Equals("Specify") || selection.Equals("String"))
+    {
+      _vm.ShowCharacterInput = true;
+    }
+
+    _vm.CharacterSelected = selection;
+  }
+
+  void OnOccurrenceChanged(ChangeEventArgs e)
+  {
+    var selection = e.Value.ToString();
+    
+    _vm.ShowOccurrenceInput = selection.Equals("Between..");
+
+    _vm.OccurrenceSelected = selection;
+  }
+  
+  async Task Complete()
+  {
+    _vm.RegexString = RegexBuilder.ToFinalRegex(_vm.RegexString);
+  }
+
+  async Task CopyTextToClipboard()
+  {
+    await _js.InvokeVoidAsync("clipboardCopy.copyText", _vm.RegexString);
+  }
+
+  void TestInputText()
+  {
+    if(RegexBuilder.CheckRegex(TestInput, _vm.RegexString))
+    {
+      TestPassLabel = "Pass";
+      TestPassColor = "green";
+    } 
+    else
+    {
+      TestPassLabel = "Fail";
+      TestPassColor = "red";
+    }
+
+    ShowTestResult = true;
+  }
+  
+  void Log(string message)
+  {
+    _vm.LogMessage = message;
+  }
+
+  void Clear()
+  {
+    var tempHold = _vm.RegexString;
+    
+    Reset();
+
+    _vm.RegexString = tempHold;
+  }
+
+  void ClearInputText()
+  {
+    TestInput = "";
+    ShowTestResult = false;
+  }
+  
+  void Reset()
+  {
+    _vm = new RegexMakerVM();
+  }
+}
