@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bitobrian.RegexMaker.Web", "Bitobrian.RegexMaker.Web.csproj", "{0C06EB66-5B9D-4810-A83D-03CA5D5DC7A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexMaker.Ssr", "src\RegexMaker.Ssr\RegexMaker.Ssr.csproj", "{0C06EB66-5B9D-4810-A83D-03CA5D5DC7A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
