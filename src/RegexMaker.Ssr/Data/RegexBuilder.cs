@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Bitobrian.RegexMaker.Web.Data
+namespace RegexMaker.Ssr.Data
 {
     public static class RegexBuilder
     {

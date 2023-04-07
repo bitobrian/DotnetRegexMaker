@@ -1,4 +1,4 @@
-﻿namespace Bitobrian.RegexMaker.Web.Data
+﻿namespace RegexMaker.Ssr.Data
 {
     public class RegexMakerVM
     {
